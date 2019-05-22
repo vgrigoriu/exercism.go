@@ -6,7 +6,9 @@ import (
 	"regexp"
 )
 
-var phoneRegex = regexp.MustCompile(`^[+1 (]*([2-9]\d\d)[) .-]*([2-9]\d\d)[ .-]*(\d{4})\s*$`)
+var areaCodeRegex = regexp.MustCompile(`^[+1 (]*([2-9]\d\d)(.*)$`)
+var exchangeCodeRegex = regexp.MustCompile(`^[) .-]*([2-9]\d\d)(.*)$`)
+var subscriberRegex = regexp.MustCompile(`^[ .-]*(\d{4})\s*$`)
 
 // phoneNumber represents a NANP phone number.
 type phoneNumber struct {
@@ -46,12 +48,27 @@ func Format(input string) (number string, err error) {
 }
 
 func parse(input string) (phoneNumber, error) {
-	matches := phoneRegex.FindStringSubmatch(input)
+	matches := areaCodeRegex.FindStringSubmatch(input)
 	if len(matches) == 0 {
-		return phoneNumber{}, fmt.Errorf("invalid phone number")
+		return phoneNumber{}, fmt.Errorf("could not find area code")
 	}
+	areaCode := matches[1]
+	rest := matches[2]
 
-	return phoneNumber{matches[1], matches[2], matches[3]}, nil
+	matches = exchangeCodeRegex.FindStringSubmatch(rest)
+	if len(matches) == 0 {
+		return phoneNumber{}, fmt.Errorf("could not find exchange code")
+	}
+	exchangeCode := matches[1]
+	rest = matches[2]
+
+	matches = subscriberRegex.FindStringSubmatch(rest)
+	if len(matches) == 0 {
+		return phoneNumber{}, fmt.Errorf("could not find subscriber number")
+	}
+	subscriber := matches[1]
+
+	return phoneNumber{areaCode, exchangeCode, subscriber}, nil
 }
 
 func (n *phoneNumber) number() string {
