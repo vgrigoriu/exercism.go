@@ -6,6 +6,8 @@ import (
 	"regexp"
 )
 
+var phoneRegex = regexp.MustCompile(`^[+1 (]*([2-9]\d\d)[) .-]*([2-9]\d\d)[ .-]*(\d{4})\s*$`)
+
 // phoneNumber represents a NANP phone number.
 type phoneNumber struct {
 	areaCode     string
@@ -44,9 +46,7 @@ func Format(input string) (number string, err error) {
 }
 
 func parse(input string) (phoneNumber, error) {
-	//                            (223) 456-7890
-	re := regexp.MustCompile(`^[+1 (]*([2-9]\d\d)[) .-]*([2-9]\d\d)[ .-]*(\d{4})\s*$`)
-	matches := re.FindStringSubmatch(input)
+	matches := phoneRegex.FindStringSubmatch(input)
 	if len(matches) == 0 {
 		return phoneNumber{}, fmt.Errorf("invalid phone number")
 	}
